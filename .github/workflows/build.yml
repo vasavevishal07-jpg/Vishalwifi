@@ -9,13 +9,74 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Create full project
+        run: |
+          mkdir -p app/src/main/java/com/vishal/wifi
+          mkdir -p app/src/main/res/layout
+          echo "include ':app'" > settings.gradle
+          cat > build.gradle <<'EOF'
+          buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+          }
+          allprojects { repositories { google(); mavenCentral() } }
+          EOF
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+            namespace 'com.vishal.wifi'
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.vishal.wifi"
+              minSdk 21
+              targetSdk 34
+              versionCode 1
+              versionName "1.0"
+            }
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+            }
+          }
+          dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+            <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+            <application android:label="Vishal WiFi" android:theme="@android:style/Theme.Material.Light">
+              <activity android:name=".MainActivity" android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/com/vishal/wifi/MainActivity.java <<'EOF'
+          package com.vishal.wifi;
+          import android.os.Bundle;
+          import android.widget.TextView;
+          import androidx.appcompat.app.AppCompatActivity;
+          public class MainActivity extends AppCompatActivity {
+            protected void onCreate(Bundle b) {
+              super.onCreate(b);
+              TextView tv = new TextView(this);
+              tv.setTextSize(22);
+              tv.setPadding(50,300,50,50);
+              tv.setText("BOSS VISHAL WIFI APP READY HAI BOSS!\n\nWiFi On Hai!");
+              setContentView(tv);
+            }
+          }
+          EOF
       - uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
-      - name: Build APK
-        run: |
-          chmod +x gradlew || true
-          if [ -f gradlew ]; then./gradlew assembleDebug; else gradle wrapper --gradle-version 8.7 &&./gradlew assembleDebug; fi
+      - run: gradle assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: Vishal-WiFi-APK
